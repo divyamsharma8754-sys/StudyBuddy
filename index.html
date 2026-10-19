@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddy - AI Homework Helper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background-color: #4A90E2;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        #chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 10px;
+            line-height: 1.4;
+        }
+        .bot {
+            background-color: #e1e1e1;
+            align-self: flex-start;
+        }
+        .user {
+            background-color: #4A90E2;
+            color: white;
+            align-self: flex-end;
+        }
+        #input-container {
+            display: flex;
+            padding: 15px;
+            background-color: #ffffff;
+            border-top: 1px solid #ccc;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        StudyBuddy AI 📚
+    </header>
+
+    <div id="chat-container">
+        <div class="message bot">
+            Hello! I'm StudyBuddy. Ask me any homework question or topic you need help with!
+        </div>
+    </div>
+
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Type your homework question here...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        // Paste your Groq API key inside the quotes below
+        const GROQ_API_KEY = "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";
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const messageText = input.value.trim();
+            if (messageText === "") return;
+
+            const chatContainer = document.getElementById('chat-container');
+
+            // 1. Show user's message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = messageText;
+            chatContainer.appendChild(userMsg);
+
+            input.value = "";
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // 2. Show thinking indicator
+            const botMsg = document.createElement('div');
+            botMsg.className = 'message bot';
+            botMsg.textContent = "Thinking...";
+            chatContainer.appendChild(botMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                // 3. Request answer from Groq API
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${GROQ_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [
+                            { role: "system", content: "You are StudyBuddy, a helpful AI tutor that explains homework concepts clearly and simply." },
+                            { role: "user", content: messageText }
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.choices && data.choices.length > 0) {
+                    botMsg.textContent = data.choices[0].message.content;
+                } else {
+                    botMsg.textContent = "Error: " + (data.error ? data.error.message : "Could not retrieve a response.");
+                }
+            } catch (error) {
+                console.error(error);
+                botMsg.textContent = "Error connecting to the AI model. Check your API key or connection.";
+            }
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+
+</body>
+</html>
